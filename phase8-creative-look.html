@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Phase 8 — Creative Look & Scope Discipline | Grade School Interactive</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --text:#1b1d22; --muted:#6a6f7a; --border:#e1e3e8;
+  --accent:#3b6fd6; --good:#1f9254; --bad:#d6453b; --mono:ui-monospace,Menlo,Consolas,monospace;
+  --scope-bg:#0c0e12; color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#15171c; --panel:#1d2026; --text:#eceef2; --muted:#9499a3; --border:#2b2e36; --scope-bg:#000000; color-scheme: dark; }
+}
+:root[data-theme="dark"]{ --bg:#15171c; --panel:#1d2026; --text:#eceef2; --muted:#9499a3; --border:#2b2e36; --scope-bg:#000000; color-scheme: dark; }
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px;}
+h1{font-size:1.25rem;margin:0 0 2px;}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:18px;}
+.grid{display:grid;grid-template-columns:1.1fr 1.4fr;gap:16px;}
+@media (max-width:860px){.grid{grid-template-columns:1fr;}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;}
+.panel h2{font-size:.95rem;margin:0 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+canvas{width:100%;height:auto;display:block;border-radius:8px;background:var(--scope-bg);}
+#srcCanvas{aspect-ratio:16/9;}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+button{font:inherit;font-size:.85rem;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+.filebtn{position:relative;overflow:hidden;}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.scopes{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.scopes .full{grid-column:1 / -1;}
+.scopecap{font-size:.72rem;color:var(--muted);margin-top:4px;}
+.sliders{display:flex;flex-direction:column;gap:12px;}
+.slider-row label{font-size:.82rem;display:flex;justify-content:space-between;margin-bottom:3px;}
+.slider-row input[type=range]{width:100%;}
+.val{font-family:var(--mono);color:var(--accent);}
+.legend{font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:6px;}
+.target{background:color-mix(in srgb, var(--accent) 12%, transparent);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:10px;}
+.brand-badge{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;display:flex;align-items:center;gap:8px;z-index:50;}
+.brand-wheel{position:relative;width:28px;height:28px;flex:none;}
+.brand-wheel .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(#e42313 0deg 36deg,#f3701e 36deg 72deg,#f6a800 72deg 108deg,#ffe000 108deg 144deg,#8ed12b 144deg 180deg,#16b24c 180deg 216deg,#00a98f 216deg 252deg,#0b7bea 252deg 288deg,#5b3fd6 288deg 324deg,#e6189c 324deg 360deg);-webkit-mask:radial-gradient(circle,transparent 42%,#000 44%);mask:radial-gradient(circle,transparent 42%,#000 44%);}
+.brand-wheel .gap{position:absolute;inset:0;border-radius:50%;background:var(--bg);clip-path:polygon(50% 50%,100% 28%,100% 72%);}
+.brand-name{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--muted);line-height:1.1;text-align:right;}
+.brand-name b{display:block;color:var(--text);font-size:.8rem;}
+@media (max-width:480px){.brand-name{display:none;}}
+table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px;}
+td,th{padding:4px 6px;border-bottom:1px solid var(--border);text-align:center;}
+.pass{color:var(--good);font-weight:600;}
+.fail{color:var(--bad);font-weight:600;}
+.feedback{margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.88rem;display:none;}
+.feedback.show{display:block;}
+.feedback.ok{background:color-mix(in srgb, var(--good) 15%, transparent);border:1px solid var(--good);}
+.feedback.no{background:color-mix(in srgb, var(--bad) 15%, transparent);border:1px solid var(--bad);}
+</style>
+<link rel="stylesheet" href="responsive.css">
+<script src="responsive.js" defer></script>
+</head>
+<body>
+<div class="brand-badge"><div class="brand-wheel"><div class="ring"></div><div class="gap"></div></div><div class="brand-name"><b>COLORIST</b>YRGB</div></div>
+<div class="wrap">
+<nav class="lesson-nav" aria-label="Course navigation"><details><summary>Course menu</summary><div class="course-links">
+<a href="index.html">Course home</a>
+<a href="phase1-scope-literacy.html">01 — Scope Literacy</a>
+<a href="phase2-exposure-correction.html">02 — Exposure Correction</a>
+<a href="phase3-white-balance.html">03 — White Balance</a>
+<a href="phase4-contrast-range.html">04 — Contrast &amp; Dynamic Range</a>
+<a href="phase5-saturation-skintone.html">05 — Saturation &amp; Skin Tone</a>
+<a href="phase6-legal-gamut.html">06 — Legal Range &amp; Gamut Check</a>
+<a href="phase7-shot-matching.html">07 — Shot Matching</a>
+<a href="phase8-creative-look.html" aria-current="page">08 — Creative Look &amp; Scope Discipline</a>
+<a href="phase9-blind-diagnosis.html">09 — Blind Diagnosis Mode</a>
+<a href="phase10-certification.html">10 — Final Certification Project</a>
+</div></details></nav>
+
+  <h1>Phase 8 — Creative Look & Scope Discipline 🎬</h1>
+  <div class="sub">Split-tone diye assigned look banao, kintu black/white patch legal range-er bhitore rakho.</div>
+
+  <div class="target" id="targetLabel">Target Look: —</div>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <h2>Source</h2>
+        <canvas id="srcCanvas" width="480" height="270"></canvas>
+        <div class="btnrow">
+          <button class="primary" id="newChallengeBtn">🎲 New Challenge</button>
+          <button id="resetBtn">↺ Reset Grade</button>
+        </div>
+        <div class="btnrow">
+          <button class="filebtn">📁 Nijer clip upload koro
+            <input type="file" id="fileInput" accept="video/*,image/*">
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Split-Tone Controls</h2>
+        <div class="sliders">
+          <div class="slider-row"><label>Shadow Hue <span class="val" id="shHueVal">0</span>°</label><input type="range" id="shHue" min="0" max="360" value="0"></div>
+          <div class="slider-row"><label>Shadow Amount <span class="val" id="shAmtVal">0</span></label><input type="range" id="shAmt" min="0" max="50" value="0"></div>
+          <div class="slider-row"><label>Highlight Hue <span class="val" id="hlHueVal">0</span>°</label><input type="range" id="hlHue" min="0" max="360" value="0"></div>
+          <div class="slider-row"><label>Highlight Amount <span class="val" id="hlAmtVal">0</span></label><input type="range" id="hlAmt" min="0" max="50" value="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Scopes</h2>
+      <div class="scopes">
+        <div>
+          <canvas id="wfCanvas" width="300" height="220"></canvas>
+          <div class="scopecap">Waveform — dashed = 7.5 & 100 IRE legal bounds</div>
+        </div>
+        <div>
+          <canvas id="vsCanvas" width="300" height="220"></canvas>
+          <div class="scopecap">Vectorscope</div>
+        </div>
+        <div class="full">
+          <canvas id="prCanvas" width="620" height="180"></canvas>
+          <div class="scopecap">RGB Parade</div>
+        </div>
+      </div>
+      <div class="btnrow"><button class="primary" id="checkBtn">✅ Check Look</button></div>
+      <table id="resultTable" style="display:none">
+        <thead><tr><th>Check</th><th>Value</th><th>Status</th></tr></thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const srcCanvas=document.getElementById('srcCanvas'), srcCtx=srcCanvas.getContext('2d');
+const wfCanvas=document.getElementById('wfCanvas'), wfCtx=wfCanvas.getContext('2d');
+const vsCanvas=document.getElementById('vsCanvas'), vsCtx=vsCanvas.getContext('2d');
+const prCanvas=document.getElementById('prCanvas'), prCtx=prCanvas.getContext('2d');
+const W=srcCanvas.width, H=srcCanvas.height;
+const grayIRE=[0,10,20,40,60,80,100];
+function clamp(v){return Math.max(0,Math.min(255,v));}
+
+const LOOKS=[
+  {name:'Teal & Orange', shadow:[160,200], highlight:[15,45]},
+  {name:'Moody Blue', shadow:[195,250], highlight:[195,250]},
+  {name:'Warm Vintage', shadow:[25,60], highlight:[25,60]},
+  {name:'Sunset Glow', shadow:[275,320], highlight:[18,48]}
+];
+let currentLook=null, rawData=null, usingVideo=false, videoEl=null, rafId=null;
+
+function hslToRgb(h,s,l){
+  s/=100; l/=100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let [r,g,b]=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+  return [(r+m)*255,(g+m)*255,(b+m)*255];
+}
+
+function buildRawChart(){
+  const off=document.createElement('canvas'); off.width=W; off.height=H;
+  const octx=off.getContext('2d');
+  octx.fillStyle='#202225'; octx.fillRect(0,0,W,H);
+  const gw=W/grayIRE.length;
+  grayIRE.forEach((ire,i)=>{
+    const v=Math.round(ire*2.55);
+    octx.fillStyle=`rgb(${v},${v},${v})`;
+    octx.fillRect(i*gw,0,gw,H*0.55);
+  });
+  const bars=[[255,0,0],[0,255,0],[0,0,255],[0,255,255],[255,0,255],[255,255,0],[220,170,140]];
+  const bw=W/bars.length;
+  bars.forEach((col,i)=>{
+    octx.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`;
+    octx.fillRect(i*bw,H*0.55,bw,H*0.45);
+  });
+  return octx.getImageData(0,0,W,H);
+}
+
+function newChallenge(){
+  usingVideo=false; stopVideoLoop();
+  currentLook = LOOKS[Math.floor(Math.random()*LOOKS.length)];
+  document.getElementById('targetLabel').textContent = `Target Look: ${currentLook.name}`;
+  rawData=buildRawChart();
+  resetSliders();
+  regrade();
+  hideResult();
+}
+
+function getCtrls(){
+  return {
+    shHue:+document.getElementById('shHue').value, shAmt:+document.getElementById('shAmt').value,
+    hlHue:+document.getElementById('hlHue').value, hlAmt:+document.getElementById('hlAmt').value
+  };
+}
+function applySplitTone(r,g,b,c){
+  const Y=(0.2126*r+0.7152*g+0.0722*b)/255;
+  const shW=Math.max(0,Math.min(1,1-Y*2));
+  const hlW=Math.max(0,Math.min(1,(Y-0.5)*2));
+  const [sr,sg,sb]=hslToRgb(c.shHue,100,50);
+  const [hr,hg,hb]=hslToRgb(c.hlHue,100,50);
+  const nr=clamp(r+(sr-128)*shW*(c.shAmt/50)+(hr-128)*hlW*(c.hlAmt/50));
+  const ng=clamp(g+(sg-128)*shW*(c.shAmt/50)+(hg-128)*hlW*(c.hlAmt/50));
+  const nb=clamp(b+(sb-128)*shW*(c.shAmt/50)+(hb-128)*hlW*(c.hlAmt/50));
+  return [nr,ng,nb];
+}
+function resetSliders(){ ['shHue','shAmt','hlHue','hlAmt'].forEach(id=>{document.getElementById(id).value=0; document.getElementById(id+'Val').textContent='0';}); }
+['shHue','shAmt','hlHue','hlAmt'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',(e)=>{ document.getElementById(id+'Val').textContent=e.target.value; regrade(); });
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{resetSliders(); regrade();});
+
+function regrade(){
+  if(!rawData) return;
+  const c=getCtrls();
+  const out=srcCtx.createImageData(W,H);
+  const src=rawData.data, dst=out.data;
+  for(let i=0;i<src.length;i+=4){
+    const [r,g,b]=applySplitTone(src[i],src[i+1],src[i+2],c);
+    dst[i]=r; dst[i+1]=g; dst[i+2]=b; dst[i+3]=255;
+  }
+  srcCtx.putImageData(out,0,0);
+  computeScopes(dst);
+}
+
+function computeScopes(data){ drawWaveform(data); drawVectorscope(data); drawParade(data); }
+function clearScope(ctx,cv){ ctx.fillStyle='#000'; ctx.fillRect(0,0,cv.width,cv.height); }
+
+function drawWaveform(data){
+  clearScope(wfCtx,wfCanvas);
+  const cw=wfCanvas.width, ch=wfCanvas.height;
+  wfCtx.strokeStyle='rgba(154,163,178,0.3)'; wfCtx.font='9px sans-serif'; wfCtx.fillStyle='#9aa3b2';
+  for(let i=0;i<=10;i++){ const y=ch-(i/10)*ch; wfCtx.beginPath(); wfCtx.moveTo(0,y); wfCtx.lineTo(cw,y); wfCtx.stroke(); wfCtx.fillText(i*10,2,y-2); }
+  wfCtx.save(); wfCtx.setLineDash([4,3]); wfCtx.lineWidth=1.5;
+  wfCtx.strokeStyle='rgba(31,146,84,0.85)'; let y=ch-(7.5/100)*ch; wfCtx.beginPath(); wfCtx.moveTo(0,y); wfCtx.lineTo(cw,y); wfCtx.stroke();
+  wfCtx.strokeStyle='rgba(214,69,59,0.85)'; y=ch-(100/100)*ch; wfCtx.beginPath(); wfCtx.moveTo(0,y); wfCtx.lineTo(cw,y); wfCtx.stroke();
+  wfCtx.restore();
+  wfCtx.fillStyle='rgba(120,200,255,0.55)';
+  for(let yy=0;yy<H;yy+=3){ for(let x=0;x<W;x+=2){
+    const idx=(yy*W+x)*4; const r=data[idx],g=data[idx+1],b=data[idx+2];
+    const luma=(0.2126*r+0.7152*g+0.0722*b)/255*100;
+    wfCtx.fillRect((x/W)*cw, ch-(luma/100)*ch, 1,1);
+  }}
+}
+function drawVectorscope(data){
+  clearScope(vsCtx,vsCanvas);
+  const cx=vsCanvas.width/2, cy=vsCanvas.height/2, R=Math.min(cx,cy)-8, scale=R/180;
+  vsCtx.strokeStyle='#2a2e38';
+  vsCtx.beginPath(); vsCtx.arc(cx,cy,R,0,Math.PI*2); vsCtx.stroke();
+  vsCtx.beginPath(); vsCtx.moveTo(cx-R,cy); vsCtx.lineTo(cx+R,cy); vsCtx.moveTo(cx,cy-R); vsCtx.lineTo(cx,cy+R); vsCtx.stroke();
+  vsCtx.fillStyle='rgba(120,200,255,0.55)';
+  for(let yy=0;yy<H;yy+=4){ for(let x=0;x<W;x+=3){
+    const idx=(yy*W+x)*4; const r=data[idx],g=data[idx+1],b=data[idx+2];
+    const Y=0.2126*r+0.7152*g+0.0722*b; const u=(b-Y)*0.492, v=(r-Y)*0.877;
+    vsCtx.fillRect(cx+u*scale, cy-v*scale,1,1);
+  }}
+}
+function drawParade(data){
+  clearScope(prCtx,prCanvas);
+  const cw=prCanvas.width, ch=prCanvas.height, third=cw/3;
+  const chans=[{i:0,col:'rgba(255,90,90,0.5)'},{i:1,col:'rgba(90,255,120,0.5)'},{i:2,col:'rgba(100,160,255,0.5)'}];
+  chans.forEach(c=>{
+    prCtx.fillStyle=c.col;
+    for(let yy=0;yy<H;yy+=3){ for(let x=0;x<W;x+=2){
+      const idx=(yy*W+x)*4; const val=data[idx+c.i]/255*100;
+      prCtx.fillRect(c.i*third+(x/W)*third, ch-(val/100)*ch,1,1);
+    }}
+  });
+}
+
+function hueDist(a,b){ const d=Math.abs(a-b)%360; return Math.min(d,360-d); }
+function hueInRange(h,range){ if(range[0]<=range[1]) return h>=range[0]&&h<=range[1]; return h>=range[0]||h<=range[1]; }
+
+function hideResult(){ document.getElementById('resultTable').style.display='none'; const fb=document.getElementById('feedback'); fb.className='feedback'; fb.textContent=''; }
+
+document.getElementById('checkBtn').addEventListener('click',()=>{
+  if(!rawData||!currentLook) return;
+  const c=getCtrls();
+  const data=srcCtx.getImageData(0,0,W,H).data;
+  const body=document.getElementById('resultBody'); body.innerHTML='';
+  let allPass=true;
+  const shOK = hueInRange(c.shHue,currentLook.shadow) && c.shAmt>=15;
+  const hlOK = hueInRange(c.hlHue,currentLook.highlight) && c.hlAmt>=15;
+  [['Shadow hue/amount matches look',shOK],['Highlight hue/amount matches look',hlOK]].forEach(([label,pass])=>{
+    if(!pass) allPass=false;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${label}</td><td>—</td><td class="${pass?'pass':'fail'}">${pass?'✅':'❌'}</td>`;
+    body.appendChild(tr);
+  });
+  const gw=W/grayIRE.length;
+  [0,6].forEach(i=>{
+    const cx=Math.floor((i+0.5)*gw), cy=Math.floor(H*0.27);
+    const idx=(cy*W+cx)*4;
+    const luma=(0.2126*data[idx]+0.7152*data[idx+1]+0.0722*data[idx+2])/255*100;
+    const pass = luma>=5 && luma<=100.5;
+    if(!pass) allPass=false;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${grayIRE[i]} IRE patch (legal)</td><td>${luma.toFixed(1)}</td><td class="${pass?'pass':'fail'}">${pass?'✅':'❌'}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById('resultTable').style.display='table';
+  const fb=document.getElementById('feedback');
+  fb.className='feedback show '+(allPass?'ok':'no');
+  fb.innerHTML = allPass
+    ? `✅ "${currentLook.name}" look thik banano geche, ar scope-o legal range-e ache!`
+    : `❌ Hue/amount target-er shathe match korche na, othoba black/white patch illegal hoye geche — adjust koro.`;
+});
+
+function stopVideoLoop(){ if(rafId){cancelAnimationFrame(rafId); rafId=null;} if(videoEl){videoEl.pause();} }
+document.getElementById('fileInput').addEventListener('change',(e)=>{
+  const file=e.target.files[0]; if(!file) return;
+  const url=URL.createObjectURL(file);
+  hideResult();
+  if(file.type.startsWith('image/')){
+    usingVideo=false; stopVideoLoop();
+    const img=new Image();
+    img.onload=()=>{
+      const off=document.createElement('canvas'); off.width=W; off.height=H;
+      const octx=off.getContext('2d'); octx.drawImage(img,0,0,W,H);
+      rawData=octx.getImageData(0,0,W,H);
+      resetSliders(); regrade();
+    };
+    img.src=url;
+  } else {
+    usingVideo=true;
+    videoEl=document.createElement('video'); videoEl.src=url; videoEl.muted=true; videoEl.loop=true; videoEl.playsInline=true;
+    videoEl.addEventListener('loadeddata',()=>{
+      videoEl.play();
+      const off=document.createElement('canvas'); off.width=W; off.height=H; const octx=off.getContext('2d');
+      const loop=()=>{
+        octx.drawImage(videoEl,0,0,W,H);
+        rawData=octx.getImageData(0,0,W,H);
+        regrade();
+        rafId=requestAnimationFrame(loop);
+      };
+      loop();
+    });
+  }
+});
+
+document.getElementById('newChallengeBtn').addEventListener('click', newChallenge);
+newChallenge();
+</script>
+</body>
+</html>

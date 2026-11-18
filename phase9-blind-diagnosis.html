@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Phase 9 — Blind Diagnosis | Grade School Interactive</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --text:#1b1d22; --muted:#6a6f7a; --border:#e1e3e8;
+  --accent:#3b6fd6; --good:#1f9254; --bad:#d6453b; --mono:ui-monospace,Menlo,Consolas,monospace;
+  --scope-bg:#0c0e12; color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#15171c; --panel:#1d2026; --text:#eceef2; --muted:#9499a3; --border:#2b2e36; --scope-bg:#000000; color-scheme: dark; }
+}
+:root[data-theme="dark"]{ --bg:#15171c; --panel:#1d2026; --text:#eceef2; --muted:#9499a3; --border:#2b2e36; --scope-bg:#000000; color-scheme: dark; }
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px;}
+h1{font-size:1.25rem;margin:0 0 2px;}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:18px;}
+.grid{display:grid;grid-template-columns:1.1fr 1.4fr;gap:16px;}
+@media (max-width:860px){.grid{grid-template-columns:1fr;}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;}
+.panel h2{font-size:.95rem;margin:0 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+canvas{width:100%;height:auto;display:block;border-radius:8px;background:var(--scope-bg);}
+.srcwrap{position:relative;}
+#srcCanvas{aspect-ratio:16/9;transition:filter .2s;}
+#srcCanvas.blind{filter:blur(28px) brightness(0.3);}
+.blindtag{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.9rem;letter-spacing:.05em;pointer-events:none;}
+.blindtag.hidden{display:none;}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+button{font:inherit;font-size:.85rem;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+.filebtn{position:relative;overflow:hidden;}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.scopes{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.scopes .full{grid-column:1 / -1;}
+.scopecap{font-size:.72rem;color:var(--muted);margin-top:4px;}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;}
+.slider-row label{font-size:.8rem;display:flex;justify-content:space-between;margin-bottom:3px;}
+.slider-row input[type=range]{width:100%;}
+.val{font-family:var(--mono);color:var(--accent);}
+.legend{font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:6px;}
+.timer{font-family:var(--mono);font-weight:700;font-size:1rem;color:var(--accent);}
+.brand-badge{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;display:flex;align-items:center;gap:8px;z-index:50;}
+.brand-wheel{position:relative;width:28px;height:28px;flex:none;}
+.brand-wheel .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(#e42313 0deg 36deg,#f3701e 36deg 72deg,#f6a800 72deg 108deg,#ffe000 108deg 144deg,#8ed12b 144deg 180deg,#16b24c 180deg 216deg,#00a98f 216deg 252deg,#0b7bea 252deg 288deg,#5b3fd6 288deg 324deg,#e6189c 324deg 360deg);-webkit-mask:radial-gradient(circle,transparent 42%,#000 44%);mask:radial-gradient(circle,transparent 42%,#000 44%);}
+.brand-wheel .gap{position:absolute;inset:0;border-radius:50%;background:var(--bg);clip-path:polygon(50% 50%,100% 28%,100% 72%);}
+.brand-name{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--muted);line-height:1.1;text-align:right;}
+.brand-name b{display:block;color:var(--text);font-size:.8rem;}
+@media (max-width:480px){.brand-name{display:none;}}
+table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px;}
+td,th{padding:4px 6px;border-bottom:1px solid var(--border);text-align:center;}
+.pass{color:var(--good);font-weight:600;}
+.fail{color:var(--bad);font-weight:600;}
+.feedback{margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.88rem;display:none;}
+.feedback.show{display:block;}
+.feedback.ok{background:color-mix(in srgb, var(--good) 15%, transparent);border:1px solid var(--good);}
+.feedback.no{background:color-mix(in srgb, var(--bad) 15%, transparent);border:1px solid var(--bad);}
+</style>
+<link rel="stylesheet" href="responsive.css">
+<script src="responsive.js" defer></script>
+</head>
+<body>
+<div class="brand-badge"><div class="brand-wheel"><div class="ring"></div><div class="gap"></div></div><div class="brand-name"><b>COLORIST</b>YRGB</div></div>
+<div class="wrap">
+<nav class="lesson-nav" aria-label="Course navigation"><details><summary>Course menu</summary><div class="course-links">
+<a href="index.html">Course home</a>
+<a href="phase1-scope-literacy.html">01 — Scope Literacy</a>
+<a href="phase2-exposure-correction.html">02 — Exposure Correction</a>
+<a href="phase3-white-balance.html">03 — White Balance</a>
+<a href="phase4-contrast-range.html">04 — Contrast &amp; Dynamic Range</a>
+<a href="phase5-saturation-skintone.html">05 — Saturation &amp; Skin Tone</a>
+<a href="phase6-legal-gamut.html">06 — Legal Range &amp; Gamut Check</a>
+<a href="phase7-shot-matching.html">07 — Shot Matching</a>
+<a href="phase8-creative-look.html">08 — Creative Look &amp; Scope Discipline</a>
+<a href="phase9-blind-diagnosis.html" aria-current="page">09 — Blind Diagnosis Mode</a>
+<a href="phase10-certification.html">10 — Final Certification Project</a>
+</div></details></nav>
+
+  <h1>Phase 9 — Blind Diagnosis Mode 🙈</h1>
+  <div class="sub">Preview blur kora — shudhu scope dekhe exposure + white balance + saturation shob issue ekसাथে fix koro.</div>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <h2>Source (Blind)</h2>
+        <div class="srcwrap">
+          <canvas id="srcCanvas" class="blind" width="480" height="270"></canvas>
+          <div class="blindtag" id="blindTag">🙈 BLIND MODE</div>
+        </div>
+        <div class="btnrow">
+          <button class="primary" id="newChallengeBtn">🎲 New Challenge</button>
+          <button id="resetBtn">↺ Reset Grade</button>
+          <button id="peekBtn">👁 Peek (3s)</button>
+        </div>
+        <div class="btnrow">
+          <button class="filebtn">📁 Nijer clip upload koro
+            <input type="file" id="fileInput" accept="video/*,image/*">
+          </button>
+          <button id="timerBtn">⏱ Start 90s Timer</button>
+          <span class="timer" id="timerDisplay"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Full Grading Toolkit</h2>
+        <div class="sliders">
+          <div class="slider-row"><label>Lift <span class="val" id="liftVal">0</span></label><input type="range" id="lift" min="-50" max="50" value="0"></div>
+          <div class="slider-row"><label>Gain <span class="val" id="gainVal">0</span></label><input type="range" id="gain" min="-50" max="50" value="0"></div>
+          <div class="slider-row"><label>Gamma <span class="val" id="gammaVal">0</span></label><input type="range" id="gamma" min="-50" max="50" value="0"></div>
+          <div class="slider-row"><label>Saturation <span class="val" id="satVal">0</span></label><input type="range" id="sat" min="-50" max="100" value="0"></div>
+          <div class="slider-row"><label>Temp <span class="val" id="tempVal">0</span></label><input type="range" id="temp" min="-50" max="50" value="0"></div>
+          <div class="slider-row"><label>Tint <span class="val" id="tintVal">0</span></label><input type="range" id="tint" min="-50" max="50" value="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Scopes (your only eyes)</h2>
+      <div class="scopes">
+        <div>
+          <canvas id="wfCanvas" width="300" height="220"></canvas>
+          <div class="scopecap">Waveform</div>
+        </div>
+        <div>
+          <canvas id="vsCanvas" width="300" height="220"></canvas>
+          <div class="scopecap">Vectorscope</div>
+        </div>
+        <div class="full">
+          <canvas id="prCanvas" width="620" height="180"></canvas>
+          <div class="scopecap">RGB Parade</div>
+        </div>
+      </div>
+      <div class="btnrow"><button class="primary" id="checkBtn">✅ Check Diagnosis</button></div>
+      <table id="resultTable" style="display:none">
+        <thead><tr><th>Check</th><th>Diff</th><th>Status</th></tr></thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const srcCanvas=document.getElementById('srcCanvas'), srcCtx=srcCanvas.getContext('2d');
+const wfCanvas=document.getElementById('wfCanvas'), wfCtx=wfCanvas.getContext('2d');
+const vsCanvas=document.getElementById('vsCanvas'), vsCtx=vsCanvas.getContext('2d');
+const prCanvas=document.getElementById('prCanvas'), prCtx=prCanvas.getContext('2d');
+const W=srcCanvas.width, H=srcCanvas.height;
+const grayIRE=[0,10,20,40,60,80,100];
+const PURE={R:[255,0,0],G:[0,255,0],B:[0,0,255],C:[0,255,255],M:[255,0,255],Y:[255,255,0]};
+const barOrder=['R','G','B','C','M','Y'];
+function clamp(v){return Math.max(0,Math.min(255,v));}
+function toYUV(r,g,b){ const Y=0.2126*r+0.7152*g+0.0722*b; return [Y,(b-Y)*0.492,(r-Y)*0.877]; }
+function fromYUV(Y,U,V){ const r=clamp(V/0.877+Y), b=clamp(U/0.492+Y); const g=clamp((Y-0.2126*r-0.0722*b)/0.7152); return [r,g,b]; }
+function scaleSat(r,g,b,factor){ const [Y,U,V]=toYUV(r,g,b); return fromYUV(Y,U*factor,V*factor); }
+
+let rawData=null, usingVideo=false, videoEl=null, rafId=null, timerInterval=null;
+
+function buildRawChart(offset,mix,cast){
+  const off=document.createElement('canvas'); off.width=W; off.height=H;
+  const octx=off.getContext('2d');
+  octx.fillStyle='#202225'; octx.fillRect(0,0,W,H);
+  const gw=W/grayIRE.length;
+  grayIRE.forEach((ire,i)=>{
+    const v=clamp(ire*2.55+offset);
+    const r=clamp(v+cast[0]), g=clamp(v+cast[1]), b=clamp(v+cast[2]);
+    octx.fillStyle=`rgb(${r},${g},${b})`;
+    octx.fillRect(i*gw,0,gw,H*0.55);
+  });
+  const bars=barOrder.map(k=>PURE[k]).concat([[220,170,140]]);
+  const bw=W/bars.length;
+  bars.forEach((col,i)=>{
+    let [r,g,b]=scaleSat(col[0],col[1],col[2],mix);
+    r=clamp(r+offset+cast[0]); g=clamp(g+offset+cast[1]); b=clamp(b+offset+cast[2]);
+    octx.fillStyle=`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+    octx.fillRect(i*bw,H*0.55,bw,H*0.45);
+  });
+  return octx.getImageData(0,0,W,H);
+}
+
+function newChallenge(){
+  usingVideo=false; stopVideoLoop(); stopTimer();
+  const offset=-30+Math.random()*60;
+  const mix=0.5+Math.random()*0.9;
+  const cast=[-22+Math.random()*44,-15+Math.random()*30,-22+Math.random()*44];
+  rawData=buildRawChart(offset,mix,cast);
+  resetSliders();
+  regrade();
+  hideResult();
+  srcCanvas.classList.add('blind'); document.getElementById('blindTag').classList.remove('hidden');
+}
+
+function getCtrls(){
+  return {
+    lift:+document.getElementById('lift').value, gain:+document.getElementById('gain').value, gamma:+document.getElementById('gamma').value,
+    sat:+document.getElementById('sat').value, temp:+document.getElementById('temp').value, tint:+document.getElementById('tint').value
+  };
+}
+function applyAll(r,g,b,s){
+  function expo(v){ let n=v/255; n=n+s.lift/100*0.5; n=n*(1+s.gain/100*0.6); n=Math.pow(Math.max(n,0.0001),1/(1+s.gamma/100*0.5)); return clamp(n*255); }
+  r=expo(r); g=expo(g); b=expo(b);
+  const tempOff=s.temp*0.6, tintOff=s.tint*0.7;
+  r=clamp(r+tempOff+tintOff); g=clamp(g-2*tintOff); b=clamp(b-tempOff+tintOff);
+  const satFactor=1+s.sat/100;
+  [r,g,b]=scaleSat(r,g,b,satFactor);
+  return [r,g,b];
+}
+function resetSliders(){ ['lift','gain','gamma','sat','temp','tint'].forEach(id=>{document.getElementById(id).value=0; document.getElementById(id+'Val').textContent='0';}); }
+['lift','gain','gamma','sat','temp','tint'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',(e)=>{ document.getElementById(id+'Val').textContent=e.target.value; regrade(); });
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{resetSliders(); regrade();});
+
+function regrade(){
+  if(!rawData) return;
+  const s=getCtrls();
+  const out=srcCtx.createImageData(W,H);
+  const src=rawData.data, dst=out.data;
+  for(let i=0;i<src.length;i+=4){
+    const [r,g,b]=applyAll(src[i],src[i+1],src[i+2],s);
+    dst[i]=r; dst[i+1]=g; dst[i+2]=b; dst[i+3]=255;
+  }
+  srcCtx.putImageData(out,0,0);
+  computeScopes(dst);
+}
+
+function computeScopes(data){ drawWaveform(data); drawVectorscope(data); drawParade(data); }
+function clearScope(ctx,cv){ ctx.fillStyle='#000'; ctx.fillRect(0,0,cv.width,cv.height); }
+function drawWaveform(data){
+  clearScope(wfCtx,wfCanvas);
+  const cw=wfCanvas.width, ch=wfCanvas.height;
+  wfCtx.strokeStyle='rgba(154,163,178,0.3)'; wfCtx.font='9px sans-serif'; wfCtx.fillStyle='#9aa3b2';
+  for(let i=0;i<=10;i++){ const y=ch-(i/10)*ch; wfCtx.beginPath(); wfCtx.moveTo(0,y); wfCtx.lineTo(cw,y); wfCtx.stroke(); wfCtx.fillText(i*10,2,y-2); }
+  wfCtx.fillStyle='rgba(120,200,255,0.55)';
+  for(let yy=0;yy<H;yy+=3){ for(let x=0;x<W;x+=2){
+    const idx=(yy*W+x)*4; const r=data[idx],g=data[idx+1],b=data[idx+2];
+    const luma=(0.2126*r+0.7152*g+0.0722*b)/255*100;
+    wfCtx.fillRect((x/W)*cw, ch-(luma/100)*ch, 1,1);
+  }}
+}
+function drawVectorscope(data){
+  clearScope(vsCtx,vsCanvas);
+  const cx=vsCanvas.width/2, cy=vsCanvas.height/2, R=Math.min(cx,cy)-8, scale=R/180;
+  vsCtx.strokeStyle='#2a2e38';
+  vsCtx.beginPath(); vsCtx.arc(cx,cy,R,0,Math.PI*2); vsCtx.stroke();
+  vsCtx.beginPath(); vsCtx.moveTo(cx-R,cy); vsCtx.lineTo(cx+R,cy); vsCtx.moveTo(cx,cy-R); vsCtx.lineTo(cx,cy+R); vsCtx.stroke();
+  vsCtx.font='9px sans-serif';
+  for(const [label,[r,g,b]] of Object.entries(PURE)){
+    const [Y,U,V]=toYUV(r,g,b); const px=cx+U*scale, py=cy-V*scale;
+    vsCtx.strokeStyle='rgba(255,255,255,0.4)'; vsCtx.beginPath(); vsCtx.arc(px,py,5,0,Math.PI*2); vsCtx.stroke();
+    vsCtx.fillStyle='#8a93a3'; vsCtx.fillText(label, px+6, py+3);
+  }
+  vsCtx.fillStyle='rgba(120,200,255,0.55)';
+  for(let yy=0;yy<H;yy+=4){ for(let x=0;x<W;x+=3){
+    const idx=(yy*W+x)*4; const r=data[idx],g=data[idx+1],b=data[idx+2];
+    const [Y,U,V]=toYUV(r,g,b);
+    vsCtx.fillRect(cx+U*scale, cy-V*scale,1,1);
+  }}
+}
+function drawParade(data){
+  clearScope(prCtx,prCanvas);
+  const cw=prCanvas.width, ch=prCanvas.height, third=cw/3;
+  const chans=[{i:0,col:'rgba(255,90,90,0.5)'},{i:1,col:'rgba(90,255,120,0.5)'},{i:2,col:'rgba(100,160,255,0.5)'}];
+  chans.forEach(c=>{
+    prCtx.fillStyle=c.col;
+    for(let yy=0;yy<H;yy+=3){ for(let x=0;x<W;x+=2){
+      const idx=(yy*W+x)*4; const val=data[idx+c.i]/255*100;
+      prCtx.fillRect(c.i*third+(x/W)*third, ch-(val/100)*ch,1,1);
+    }}
+  });
+}
+
+document.getElementById('peekBtn').addEventListener('click',()=>{
+  srcCanvas.classList.remove('blind'); document.getElementById('blindTag').classList.add('hidden');
+  setTimeout(()=>{ srcCanvas.classList.add('blind'); document.getElementById('blindTag').classList.remove('hidden'); },3000);
+});
+
+function stopTimer(){ if(timerInterval){clearInterval(timerInterval); timerInterval=null;} document.getElementById('timerDisplay').textContent=''; }
+document.getElementById('timerBtn').addEventListener('click',()=>{
+  stopTimer();
+  let t=90;
+  document.getElementById('timerDisplay').textContent=t+'s';
+  timerInterval=setInterval(()=>{
+    t--; document.getElementById('timerDisplay').textContent=t+'s';
+    if(t<=0){ stopTimer(); document.getElementById('timerDisplay').textContent='⏰ Time up!'; }
+  },1000);
+});
+
+function hideResult(){ document.getElementById('resultTable').style.display='none'; const fb=document.getElementById('feedback'); fb.className='feedback'; fb.textContent=''; }
+
+document.getElementById('checkBtn').addEventListener('click',()=>{
+  if(!rawData) return;
+  const data=srcCtx.getImageData(0,0,W,H).data;
+  const body=document.getElementById('resultBody'); body.innerHTML='';
+  let allPass=true;
+  const gw=W/grayIRE.length;
+  grayIRE.forEach((ire,i)=>{
+    const cx=Math.floor((i+0.5)*gw), cy=Math.floor(H*0.27);
+    const idx=(cy*W+cx)*4;
+    const luma=(0.2126*data[idx]+0.7152*data[idx+1]+0.0722*data[idx+2])/255*100;
+    const diff=Math.abs(luma-ire);
+    const pass=diff<=8;
+    if(!pass) allPass=false;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${ire} IRE patch</td><td>${diff.toFixed(1)}</td><td class="${pass?'pass':'fail'}">${pass?'✅':'❌'}</td>`;
+    body.appendChild(tr);
+  });
+  const bars=barOrder.concat(['Skin']);
+  const bw=W/bars.length;
+  bars.forEach((label,i)=>{
+    const cx=Math.floor((i+0.5)*bw), cy=Math.floor(H*0.77);
+    const idx=(cy*W+cx)*4;
+    const [Y,U,V]=toYUV(data[idx],data[idx+1],data[idx+2]);
+    const col = label==='Skin' ? [220,170,140] : PURE[label];
+    const [tY,tU,tV]=toYUV(col[0],col[1],col[2]);
+    const dist=Math.sqrt((U-tU)**2+(V-tV)**2);
+    const pass=dist<=18;
+    if(!pass) allPass=false;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${label} (vector)</td><td>${dist.toFixed(0)}</td><td class="${pass?'pass':'fail'}">${pass?'✅':'❌'}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById('resultTable').style.display='table';
+  const fb=document.getElementById('feedback');
+  fb.className='feedback show '+(allPass?'ok':'no');
+  if(allPass){
+    fb.innerHTML=`✅ Scope-i diye shob fix kore phela geche! Peek kore nijer chokhe dekhte paro ekhon.`;
+    srcCanvas.classList.remove('blind'); document.getElementById('blindTag').classList.add('hidden');
+  } else {
+    fb.innerHTML=`❌ Kichu patch/bar ekhono off ache — waveform diye exposure, vectorscope diye WB/saturation aro fine-tune koro.`;
+  }
+});
+
+function stopVideoLoop(){ if(rafId){cancelAnimationFrame(rafId); rafId=null;} if(videoEl){videoEl.pause();} }
+document.getElementById('fileInput').addEventListener('change',(e)=>{
+  const file=e.target.files[0]; if(!file) return;
+  const url=URL.createObjectURL(file);
+  hideResult();
+  srcCanvas.classList.add('blind'); document.getElementById('blindTag').classList.remove('hidden');
+  if(file.type.startsWith('image/')){
+    usingVideo=false; stopVideoLoop();
+    const img=new Image();
+    img.onload=()=>{
+      const off=document.createElement('canvas'); off.width=W; off.height=H;
+      const octx=off.getContext('2d'); octx.drawImage(img,0,0,W,H);
+      rawData=octx.getImageData(0,0,W,H);
+      resetSliders(); regrade();
+    };
+    img.src=url;
+  } else {
+    usingVideo=true;
+    videoEl=document.createElement('video'); videoEl.src=url; videoEl.muted=true; videoEl.loop=true; videoEl.playsInline=true;
+    videoEl.addEventListener('loadeddata',()=>{
+      videoEl.play();
+      const off=document.createElement('canvas'); off.width=W; off.height=H; const octx=off.getContext('2d');
+      const loop=()=>{
+        octx.drawImage(videoEl,0,0,W,H);
+        rawData=octx.getImageData(0,0,W,H);
+        regrade();
+        rafId=requestAnimationFrame(loop);
+      };
+      loop();
+    });
+  }
+});
+
+document.getElementById('newChallengeBtn').addEventListener('click', newChallenge);
+newChallenge();
+</script>
+</body>
+</html>
